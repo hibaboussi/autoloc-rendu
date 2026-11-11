@@ -12,10 +12,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import tn.esprit.autoloc.domain.Paiement;
 import tn.esprit.autoloc.service.IPaiementService;
 import tn.esprit.autoloc.web.dto.ApiError;
 import tn.esprit.autoloc.web.dto.PaiementResponse;
+import tn.esprit.autoloc.web.mapper.PaiementMapper;
 
 import java.util.List;
 
@@ -26,12 +26,13 @@ import java.util.List;
 public class PaiementController {
 
     private final IPaiementService paiementService;
+    private final PaiementMapper paiementMapper;
 
     @GetMapping
     @Operation(summary = "Lister les paiements")
     @ApiResponse(responseCode = "200", description = "Liste des paiements")
     public List<PaiementResponse> findAll() {
-        return paiementService.findAll().stream().map(PaiementController::toResponse).toList();
+        return paiementService.findAll().stream().map(paiementMapper::toResponse).toList();
     }
 
     @GetMapping("/{id}")
@@ -42,16 +43,6 @@ public class PaiementController {
                     content = @Content(schema = @Schema(implementation = ApiError.class)))
     })
     public PaiementResponse findById(@Parameter(description = "Identifiant du paiement") @PathVariable Long id) {
-        return toResponse(paiementService.findById(id));
-    }
-
-    private static PaiementResponse toResponse(Paiement paiement) {
-        return new PaiementResponse(
-                paiement.getIdPaiement(),
-                paiement.getMontant(),
-                paiement.getDatePaiement(),
-                paiement.getModePaiement(),
-                paiement.getContrat().getIdContrat()
-        );
+        return paiementMapper.toResponse(paiementService.findById(id));
     }
 }

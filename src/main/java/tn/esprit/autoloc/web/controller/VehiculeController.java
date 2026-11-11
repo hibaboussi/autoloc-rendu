@@ -26,6 +26,7 @@ import tn.esprit.autoloc.service.IVehiculeService;
 import tn.esprit.autoloc.web.dto.ApiError;
 import tn.esprit.autoloc.web.dto.VehiculeRequest;
 import tn.esprit.autoloc.web.dto.VehiculeResponse;
+import tn.esprit.autoloc.web.mapper.VehiculeMapper;
 
 import java.util.List;
 
@@ -38,6 +39,7 @@ public class VehiculeController {
     private final IVehiculeService vehiculeService;
     private final IAgenceService agenceService;
     private final IEquipementService equipementService;
+    private final VehiculeMapper vehiculeMapper;
 
     @PostMapping
     @Operation(summary = "Créer un véhicule")
@@ -50,14 +52,14 @@ public class VehiculeController {
     })
     @ResponseStatus(HttpStatus.CREATED)
     public VehiculeResponse create(@Valid @RequestBody VehiculeRequest request) {
-        return toResponse(vehiculeService.create(toEntity(request)));
+        return vehiculeMapper.toResponse(vehiculeService.create(toEntity(request)));
     }
 
     @GetMapping
     @Operation(summary = "Lister les véhicules")
     @ApiResponse(responseCode = "200", description = "Liste des véhicules")
     public List<VehiculeResponse> findAll() {
-        return vehiculeService.findAll().stream().map(VehiculeController::toResponse).toList();
+        return vehiculeService.findAll().stream().map(vehiculeMapper::toResponse).toList();
     }
 
     @GetMapping("/{id}")
@@ -68,7 +70,7 @@ public class VehiculeController {
                     content = @Content(schema = @Schema(implementation = ApiError.class)))
     })
     public VehiculeResponse findById(@Parameter(description = "Identifiant du véhicule") @PathVariable Long id) {
-        return toResponse(vehiculeService.findById(id));
+        return vehiculeMapper.toResponse(vehiculeService.findById(id));
     }
 
     @PutMapping("/{id}")
@@ -82,7 +84,7 @@ public class VehiculeController {
     })
     public VehiculeResponse update(@Parameter(description = "Identifiant du véhicule") @PathVariable Long id,
                                    @Valid @RequestBody VehiculeRequest request) {
-        return toResponse(vehiculeService.update(id, toEntity(request)));
+        return vehiculeMapper.toResponse(vehiculeService.update(id, toEntity(request)));
     }
 
     @DeleteMapping("/{id}")
@@ -98,31 +100,11 @@ public class VehiculeController {
     }
 
     private Vehicule toEntity(VehiculeRequest request) {
-        Vehicule vehicule = new Vehicule();
-        vehicule.setImmatriculation(request.immatriculation());
-        vehicule.setMarque(request.marque());
-        vehicule.setModele(request.modele());
-        vehicule.setCategorie(request.categorie());
-        vehicule.setTarifJournalier(request.tarifJournalier());
-        vehicule.setStatut(request.statut());
-        vehicule.setAgence(agenceService.findById(request.agenceId()));
-        vehicule.setEquipements(request.equipementIds().stream()
+        return vehiculeMapper.toEntity(request,
+                agenceService.findById(request.agenceId()),
+                request.equipementIds().stream()
                 .distinct()
                 .map(equipementService::findById)
                 .toList());
-        return vehicule;
-    }
-
-    private static VehiculeResponse toResponse(Vehicule vehicule) {
-        return new VehiculeResponse(
-                vehicule.getIdVehicule(),
-                vehicule.getImmatriculation(),
-                vehicule.getMarque(),
-                vehicule.getModele(),
-                vehicule.getCategorie(),
-                vehicule.getTarifJournalier(),
-                vehicule.getStatut(),
-                vehicule.getAgence().getIdAgence()
-        );
     }
 }

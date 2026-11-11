@@ -49,6 +49,8 @@ class AutoLocApiIntegrationTest {
         get("/api/agences", 200);
         get("/api/agences/" + agenceId, 200);
         get("/api/agences/999999", 404);
+        MvcResult invalidId = get("/api/agences/invalide", 400);
+        assertEquals(400, objectMapper.readTree(invalidId.getResponse().getContentAsString()).path("status").asInt());
         post("/api/agences",
                 "{\"nom\":\"\",\"ville\":\"Tunis\",\"adresse\":\"Adresse\",\"telephone\":\"71000002\"}", 400);
         put("/api/agences/" + agenceId,
@@ -98,6 +100,12 @@ class AutoLocApiIntegrationTest {
         get("/api/employes/999999", 404);
         post("/api/employes", "{\"nom\":\"\",\"prenom\":\"Test\",\"role\":\"AGENT\",\"agenceId\":"
                 + agenceId + "}", 400);
+        MvcResult invalidEnum = post("/api/employes",
+                "{\"nom\":\"Employé\",\"prenom\":\"Test\",\"role\":\"INCONNU\",\"agenceId\":"
+                        + agenceId + "}", 400);
+        JsonNode enumError = objectMapper.readTree(invalidEnum.getResponse().getContentAsString());
+        assertEquals(400, enumError.path("status").asInt());
+        assertTrue(enumError.path("message").asText().contains("JSON"));
         put("/api/employes/" + employeId,
                 employe.replace("\"role\":\"AGENT\"", "\"role\":\"MANAGER\""), 200);
 
@@ -148,6 +156,11 @@ class AutoLocApiIntegrationTest {
         assertEquals(520, updatedContrat.path("montantTotal").asInt());
         assertEquals(paiementId, updatedContrat.path("paiementId").asLong());
 
+        MvcResult conflict = mockMvc.perform(apiRequest(HttpMethod.DELETE, "/api/agences/" + agenceId))
+                .andExpect(status().isConflict())
+                .andReturn();
+        assertEquals(409, objectMapper.readTree(conflict.getResponse().getContentAsString()).path("status").asInt());
+
         delete("/api/contrats/" + contratId, 204);
         get("/api/paiements/" + paiementId, 404);
         delete("/api/reservations/" + reservationId, 204);
@@ -162,7 +175,9 @@ class AutoLocApiIntegrationTest {
     }
 
     private long create(String path, String body, String idProperty) throws Exception {
-        JsonNode response = objectMapper.readTree(post(path, body, 201).getResponse().getContentAsString());
+        MvcResult result = post(path, body, 201);
+        assertDtoPayload(result);
+        JsonNode response = objectMapper.readTree(result.getResponse().getContentAsString());
         long id = response.path(idProperty).asLong();
         assertTrue(id > 0, "La réponse de création doit contenir " + idProperty);
         return id;
@@ -177,16 +192,24 @@ class AutoLocApiIntegrationTest {
     }
 
     private MvcResult get(String path, int expectedStatus) throws Exception {
-        return mockMvc.perform(apiRequest(HttpMethod.GET, path))
+        MvcResult result = mockMvc.perform(apiRequest(HttpMethod.GET, path))
                 .andExpect(status().is(expectedStatus))
                 .andReturn();
+        if (expectedStatus == 200 && !path.equals("/api/v3/api-docs")) {
+            assertDtoPayload(result);
+        }
+        return result;
     }
 
     private void put(String path, String body, int expectedStatus) throws Exception {
-        mockMvc.perform(apiRequest(HttpMethod.PUT, path)
+        MvcResult result = mockMvc.perform(apiRequest(HttpMethod.PUT, path)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
-                .andExpect(status().is(expectedStatus));
+                .andExpect(status().is(expectedStatus))
+                .andReturn();
+        if (expectedStatus == 200) {
+            assertDtoPayload(result);
+        }
     }
 
     private void delete(String path, int expectedStatus) throws Exception {
@@ -199,5 +222,27 @@ class AutoLocApiIntegrationTest {
         return MockMvcRequestBuilders.request(method, path)
                 .contextPath("/api")
                 .servletPath(servletPath);
+    }
+
+    private void assertDtoPayload(MvcResult result) throws Exception {
+        JsonNode payload = objectMapper.readTree(result.getResponse().getContentAsString());
+        if (payload.isArray()) {
+            for (JsonNode item : payload) {
+                assertDtoObject(item);
+            }
+        } else {
+            assertDtoObject(payload);
+        }
+    }
+
+    private static void assertDtoObject(JsonNode payload) {
+        assertTrue(payload.isObject(), "Une réponse métier doit être un objet ou une liste de DTO");
+        for (String entityRelation : new String[]{
+                "agence", "client", "contrat", "employe", "equipements",
+                "maintenance", "paiement", "reservation", "vehicule"
+        }) {
+            assertFalse(payload.has(entityRelation),
+                    "La réponse ne doit pas exposer l'entité JPA imbriquée " + entityRelation);
+        }
     }
 }

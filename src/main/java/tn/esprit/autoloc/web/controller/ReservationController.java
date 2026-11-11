@@ -19,13 +19,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import tn.esprit.autoloc.domain.Reservation;
 import tn.esprit.autoloc.service.IClientService;
 import tn.esprit.autoloc.service.IReservationService;
 import tn.esprit.autoloc.service.IVehiculeService;
 import tn.esprit.autoloc.web.dto.ApiError;
 import tn.esprit.autoloc.web.dto.ReservationRequest;
 import tn.esprit.autoloc.web.dto.ReservationResponse;
+import tn.esprit.autoloc.web.mapper.ReservationMapper;
 
 import java.util.List;
 
@@ -38,6 +38,7 @@ public class ReservationController {
     private final IReservationService reservationService;
     private final IVehiculeService vehiculeService;
     private final IClientService clientService;
+    private final ReservationMapper reservationMapper;
 
     @PostMapping
     @Operation(summary = "Créer une réservation")
@@ -50,14 +51,17 @@ public class ReservationController {
     })
     @ResponseStatus(HttpStatus.CREATED)
     public ReservationResponse create(@Valid @RequestBody ReservationRequest request) {
-        return toResponse(reservationService.create(toEntity(request)));
+        return reservationMapper.toResponse(reservationService.create(
+                reservationMapper.toEntity(request,
+                        vehiculeService.findById(request.vehiculeId()),
+                        clientService.findById(request.clientId()))));
     }
 
     @GetMapping
     @Operation(summary = "Lister les réservations")
     @ApiResponse(responseCode = "200", description = "Liste des réservations")
     public List<ReservationResponse> findAll() {
-        return reservationService.findAll().stream().map(ReservationController::toResponse).toList();
+        return reservationService.findAll().stream().map(reservationMapper::toResponse).toList();
     }
 
     @GetMapping("/{id}")
@@ -68,7 +72,7 @@ public class ReservationController {
                     content = @Content(schema = @Schema(implementation = ApiError.class)))
     })
     public ReservationResponse findById(@Parameter(description = "Identifiant de la réservation") @PathVariable Long id) {
-        return toResponse(reservationService.findById(id));
+        return reservationMapper.toResponse(reservationService.findById(id));
     }
 
     @PutMapping("/{id}")
@@ -82,7 +86,10 @@ public class ReservationController {
     })
     public ReservationResponse update(@Parameter(description = "Identifiant de la réservation") @PathVariable Long id,
                                       @Valid @RequestBody ReservationRequest request) {
-        return toResponse(reservationService.update(id, toEntity(request)));
+        return reservationMapper.toResponse(reservationService.update(
+                id, reservationMapper.toEntity(request,
+                        vehiculeService.findById(request.vehiculeId()),
+                        clientService.findById(request.clientId()))));
     }
 
     @DeleteMapping("/{id}")
@@ -95,27 +102,5 @@ public class ReservationController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteById(@Parameter(description = "Identifiant de la réservation") @PathVariable Long id) {
         reservationService.deleteById(id);
-    }
-
-    private Reservation toEntity(ReservationRequest request) {
-        Reservation reservation = new Reservation();
-        reservation.setDateDebut(request.dateDebut());
-        reservation.setDateFin(request.dateFin());
-        reservation.setStatut(request.statut());
-        reservation.setVehicule(vehiculeService.findById(request.vehiculeId()));
-        reservation.setClient(clientService.findById(request.clientId()));
-        return reservation;
-    }
-
-    private static ReservationResponse toResponse(Reservation reservation) {
-        return new ReservationResponse(
-                reservation.getIdReservation(),
-                reservation.getDateDebut(),
-                reservation.getDateFin(),
-                reservation.getStatut(),
-                reservation.getVehicule().getIdVehicule(),
-                reservation.getClient().getIdClient(),
-                reservation.getContrat() == null ? null : reservation.getContrat().getIdContrat()
-        );
     }
 }

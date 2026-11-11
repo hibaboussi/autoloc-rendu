@@ -19,14 +19,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import tn.esprit.autoloc.domain.Contrat;
-import tn.esprit.autoloc.domain.Paiement;
 import tn.esprit.autoloc.service.IContratService;
 import tn.esprit.autoloc.service.IReservationService;
 import tn.esprit.autoloc.web.dto.ApiError;
 import tn.esprit.autoloc.web.dto.ContratRequest;
 import tn.esprit.autoloc.web.dto.ContratResponse;
-import tn.esprit.autoloc.web.dto.PaiementInput;
+import tn.esprit.autoloc.web.mapper.ContratMapper;
 
 import java.util.List;
 
@@ -38,6 +36,7 @@ public class ContratController {
 
     private final IContratService contratService;
     private final IReservationService reservationService;
+    private final ContratMapper contratMapper;
 
     @PostMapping
     @Operation(summary = "Créer un contrat avec son paiement optionnel")
@@ -50,14 +49,15 @@ public class ContratController {
     })
     @ResponseStatus(HttpStatus.CREATED)
     public ContratResponse create(@Valid @RequestBody ContratRequest request) {
-        return toResponse(contratService.create(toEntity(request)));
+        return contratMapper.toResponse(contratService.create(
+                contratMapper.toEntity(request, reservationService.findById(request.reservationId()))));
     }
 
     @GetMapping
     @Operation(summary = "Lister les contrats")
     @ApiResponse(responseCode = "200", description = "Liste des contrats")
     public List<ContratResponse> findAll() {
-        return contratService.findAll().stream().map(ContratController::toResponse).toList();
+        return contratService.findAll().stream().map(contratMapper::toResponse).toList();
     }
 
     @GetMapping("/{id}")
@@ -68,7 +68,7 @@ public class ContratController {
                     content = @Content(schema = @Schema(implementation = ApiError.class)))
     })
     public ContratResponse findById(@Parameter(description = "Identifiant du contrat") @PathVariable Long id) {
-        return toResponse(contratService.findById(id));
+        return contratMapper.toResponse(contratService.findById(id));
     }
 
     @PutMapping("/{id}")
@@ -82,7 +82,8 @@ public class ContratController {
     })
     public ContratResponse update(@Parameter(description = "Identifiant du contrat") @PathVariable Long id,
                                   @Valid @RequestBody ContratRequest request) {
-        return toResponse(contratService.update(id, toEntity(request)));
+        return contratMapper.toResponse(contratService.update(
+                id, contratMapper.toEntity(request, reservationService.findById(request.reservationId()))));
     }
 
     @DeleteMapping("/{id}")
@@ -95,34 +96,5 @@ public class ContratController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteById(@Parameter(description = "Identifiant du contrat") @PathVariable Long id) {
         contratService.deleteById(id);
-    }
-
-    private Contrat toEntity(ContratRequest request) {
-        Contrat contrat = new Contrat();
-        contrat.setDateSignature(request.dateSignature());
-        contrat.setMontantTotal(request.montantTotal());
-        contrat.setValide(request.valide());
-        contrat.setReservation(reservationService.findById(request.reservationId()));
-        PaiementInput paiementInput = request.paiement();
-        if (paiementInput != null) {
-            Paiement paiement = new Paiement();
-            paiement.setMontant(paiementInput.montant());
-            paiement.setDatePaiement(paiementInput.datePaiement());
-            paiement.setModePaiement(paiementInput.modePaiement());
-            paiement.setContrat(contrat);
-            contrat.setPaiement(paiement);
-        }
-        return contrat;
-    }
-
-    private static ContratResponse toResponse(Contrat contrat) {
-        return new ContratResponse(
-                contrat.getIdContrat(),
-                contrat.getDateSignature(),
-                contrat.getMontantTotal(),
-                contrat.getValide(),
-                contrat.getReservation().getIdReservation(),
-                contrat.getPaiement() == null ? null : contrat.getPaiement().getIdPaiement()
-        );
     }
 }

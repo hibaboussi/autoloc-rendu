@@ -68,6 +68,14 @@ Importer `postman/AutoLoc.postman_collection.json` et `postman/AutoLoc-local.pos
 
 Captures Swagger de vérification : [page Swagger](docs/captures/swagger-ui.png), [GET agences — 200](docs/captures/swagger-agences-get-200.png), [POST agence — 201](docs/captures/swagger-agences-post-201.png), [validation — 400](docs/captures/swagger-agences-post-400.png). Elles ont été prises sur le profil `demo` (port 18081, le port 8080 étant déjà occupé lors de la capture).
 
+## Atelier 6 — DTO, mappers et validation
+
+Toutes les réponses REST utilisent les DTO du package `web.dto`; les neuf mappers du package `web.mapper` convertissent les entités et les requêtes. Les contrôleurs restent minces et délèguent les opérations métier aux services.
+
+La dépendance `spring-boot-starter-validation` active les contraintes Jakarta présentes sur les DTO d'entrée (`@NotBlank`, `@Email`, `@Positive`, limites de taille et validation des périodes). Les identifiants d'équipement sont validés lorsqu'ils sont fournis, et une liste vide reste autorisée. Les erreurs sont uniformisées en JSON par `ApiExceptionHandler` : validation et corps invalides (400), ressource absente (404), méthode HTTP non autorisée (405) et conflit d'intégrité (409).
+
+La note de l'atelier et les captures d'exécution sont disponibles dans [docs/atelier-6-notes.md](docs/atelier-6-notes.md) et [docs/captures](docs/captures).
+
 ## Génération du schéma
 La configuration finale utilise `spring.jpa.hibernate.ddl-auto=update`. Pour recréer le schéma, vérifier d'abord que MySQL est démarré et que la base `autoloc_db` ne contient aucune donnée à conserver, puis lancer temporairement l'application avec `create` :
 

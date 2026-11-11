@@ -19,11 +19,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import tn.esprit.autoloc.domain.Client;
 import tn.esprit.autoloc.service.IClientService;
 import tn.esprit.autoloc.web.dto.ApiError;
 import tn.esprit.autoloc.web.dto.ClientRequest;
 import tn.esprit.autoloc.web.dto.ClientResponse;
+import tn.esprit.autoloc.web.mapper.ClientMapper;
 
 import java.util.List;
 
@@ -34,6 +34,7 @@ import java.util.List;
 public class ClientController {
 
     private final IClientService clientService;
+    private final ClientMapper clientMapper;
 
     @PostMapping
     @Operation(summary = "Créer un client")
@@ -44,7 +45,7 @@ public class ClientController {
     })
     @ResponseStatus(HttpStatus.CREATED)
     public ClientResponse create(@Valid @RequestBody ClientRequest request) {
-        return toResponse(clientService.create(toEntity(request)));
+        return clientMapper.toResponse(clientService.create(clientMapper.toEntity(request)));
     }
 
     @GetMapping
@@ -52,7 +53,7 @@ public class ClientController {
     @ApiResponse(responseCode = "200", description = "Liste des clients")
     public List<ClientResponse> findAll() {
         return clientService.findAll().stream()
-                .map(ClientController::toResponse)
+                .map(clientMapper::toResponse)
                 .toList();
     }
 
@@ -64,7 +65,7 @@ public class ClientController {
                     content = @Content(schema = @Schema(implementation = ApiError.class)))
     })
     public ClientResponse findById(@Parameter(description = "Identifiant du client") @PathVariable Long id) {
-        return toResponse(clientService.findById(id));
+        return clientMapper.toResponse(clientService.findById(id));
     }
 
     @PutMapping("/{id}")
@@ -78,7 +79,7 @@ public class ClientController {
     })
     public ClientResponse update(@Parameter(description = "Identifiant du client") @PathVariable Long id,
                                  @Valid @RequestBody ClientRequest request) {
-        return toResponse(clientService.update(id, toEntity(request)));
+        return clientMapper.toResponse(clientService.update(id, clientMapper.toEntity(request)));
     }
 
     @DeleteMapping("/{id}")
@@ -91,28 +92,5 @@ public class ClientController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteById(@Parameter(description = "Identifiant du client") @PathVariable Long id) {
         clientService.deleteById(id);
-    }
-
-    private static Client toEntity(ClientRequest request) {
-        Client client = new Client();
-        client.setNom(request.nom());
-        client.setPrenom(request.prenom());
-        client.setEmail(request.email());
-        client.setTelephone(request.telephone());
-        client.setNumPermis(request.numPermis());
-        client.setDateInscription(request.dateInscription());
-        return client;
-    }
-
-    private static ClientResponse toResponse(Client client) {
-        return new ClientResponse(
-                client.getIdClient(),
-                client.getNom(),
-                client.getPrenom(),
-                client.getEmail(),
-                client.getTelephone(),
-                client.getNumPermis(),
-                client.getDateInscription()
-        );
     }
 }

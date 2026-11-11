@@ -19,12 +19,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import tn.esprit.autoloc.domain.Maintenance;
 import tn.esprit.autoloc.service.IMaintenanceService;
 import tn.esprit.autoloc.service.IVehiculeService;
 import tn.esprit.autoloc.web.dto.ApiError;
 import tn.esprit.autoloc.web.dto.MaintenanceRequest;
 import tn.esprit.autoloc.web.dto.MaintenanceResponse;
+import tn.esprit.autoloc.web.mapper.MaintenanceMapper;
 
 import java.util.List;
 
@@ -36,6 +36,7 @@ public class MaintenanceController {
 
     private final IMaintenanceService maintenanceService;
     private final IVehiculeService vehiculeService;
+    private final MaintenanceMapper maintenanceMapper;
 
     @PostMapping
     @Operation(summary = "Planifier une maintenance")
@@ -46,14 +47,15 @@ public class MaintenanceController {
     })
     @ResponseStatus(HttpStatus.CREATED)
     public MaintenanceResponse create(@Valid @RequestBody MaintenanceRequest request) {
-        return toResponse(maintenanceService.create(toEntity(request)));
+        return maintenanceMapper.toResponse(maintenanceService.create(
+                maintenanceMapper.toEntity(request, vehiculeService.findById(request.vehiculeId()))));
     }
 
     @GetMapping
     @Operation(summary = "Lister les maintenances")
     @ApiResponse(responseCode = "200", description = "Liste des maintenances")
     public List<MaintenanceResponse> findAll() {
-        return maintenanceService.findAll().stream().map(MaintenanceController::toResponse).toList();
+        return maintenanceService.findAll().stream().map(maintenanceMapper::toResponse).toList();
     }
 
     @GetMapping("/{id}")
@@ -64,7 +66,7 @@ public class MaintenanceController {
                     content = @Content(schema = @Schema(implementation = ApiError.class)))
     })
     public MaintenanceResponse findById(@Parameter(description = "Identifiant de la maintenance") @PathVariable Long id) {
-        return toResponse(maintenanceService.findById(id));
+        return maintenanceMapper.toResponse(maintenanceService.findById(id));
     }
 
     @PutMapping("/{id}")
@@ -78,7 +80,8 @@ public class MaintenanceController {
     })
     public MaintenanceResponse update(@Parameter(description = "Identifiant de la maintenance") @PathVariable Long id,
                                       @Valid @RequestBody MaintenanceRequest request) {
-        return toResponse(maintenanceService.update(id, toEntity(request)));
+        return maintenanceMapper.toResponse(maintenanceService.update(
+                id, maintenanceMapper.toEntity(request, vehiculeService.findById(request.vehiculeId()))));
     }
 
     @DeleteMapping("/{id}")
@@ -91,24 +94,5 @@ public class MaintenanceController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteById(@Parameter(description = "Identifiant de la maintenance") @PathVariable Long id) {
         maintenanceService.deleteById(id);
-    }
-
-    private Maintenance toEntity(MaintenanceRequest request) {
-        Maintenance maintenance = new Maintenance();
-        maintenance.setDateDebut(request.dateDebut());
-        maintenance.setDateFin(request.dateFin());
-        maintenance.setDescription(request.description());
-        maintenance.setVehicule(vehiculeService.findById(request.vehiculeId()));
-        return maintenance;
-    }
-
-    private static MaintenanceResponse toResponse(Maintenance maintenance) {
-        return new MaintenanceResponse(
-                maintenance.getIdMaintenance(),
-                maintenance.getDateDebut(),
-                maintenance.getDateFin(),
-                maintenance.getDescription(),
-                maintenance.getVehicule().getIdVehicule()
-        );
     }
 }

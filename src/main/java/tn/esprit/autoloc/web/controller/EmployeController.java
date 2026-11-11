@@ -19,12 +19,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import tn.esprit.autoloc.domain.Employe;
 import tn.esprit.autoloc.service.IAgenceService;
 import tn.esprit.autoloc.service.IEmployeService;
 import tn.esprit.autoloc.web.dto.ApiError;
 import tn.esprit.autoloc.web.dto.EmployeRequest;
 import tn.esprit.autoloc.web.dto.EmployeResponse;
+import tn.esprit.autoloc.web.mapper.EmployeMapper;
 
 import java.util.List;
 
@@ -36,6 +36,7 @@ public class EmployeController {
 
     private final IEmployeService employeService;
     private final IAgenceService agenceService;
+    private final EmployeMapper employeMapper;
 
     @PostMapping
     @Operation(summary = "Créer un employé")
@@ -48,14 +49,15 @@ public class EmployeController {
     })
     @ResponseStatus(HttpStatus.CREATED)
     public EmployeResponse create(@Valid @RequestBody EmployeRequest request) {
-        return toResponse(employeService.create(toEntity(request)));
+        return employeMapper.toResponse(employeService.create(
+                employeMapper.toEntity(request, agenceService.findById(request.agenceId()))));
     }
 
     @GetMapping
     @Operation(summary = "Lister les employés")
     @ApiResponse(responseCode = "200", description = "Liste des employés")
     public List<EmployeResponse> findAll() {
-        return employeService.findAll().stream().map(EmployeController::toResponse).toList();
+        return employeService.findAll().stream().map(employeMapper::toResponse).toList();
     }
 
     @GetMapping("/{id}")
@@ -66,7 +68,7 @@ public class EmployeController {
                     content = @Content(schema = @Schema(implementation = ApiError.class)))
     })
     public EmployeResponse findById(@Parameter(description = "Identifiant de l'employé") @PathVariable Long id) {
-        return toResponse(employeService.findById(id));
+        return employeMapper.toResponse(employeService.findById(id));
     }
 
     @PutMapping("/{id}")
@@ -80,7 +82,8 @@ public class EmployeController {
     })
     public EmployeResponse update(@Parameter(description = "Identifiant de l'employé") @PathVariable Long id,
                                   @Valid @RequestBody EmployeRequest request) {
-        return toResponse(employeService.update(id, toEntity(request)));
+        return employeMapper.toResponse(employeService.update(
+                id, employeMapper.toEntity(request, agenceService.findById(request.agenceId()))));
     }
 
     @DeleteMapping("/{id}")
@@ -93,24 +96,5 @@ public class EmployeController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteById(@Parameter(description = "Identifiant de l'employé") @PathVariable Long id) {
         employeService.deleteById(id);
-    }
-
-    private Employe toEntity(EmployeRequest request) {
-        Employe employe = new Employe();
-        employe.setNom(request.nom());
-        employe.setPrenom(request.prenom());
-        employe.setRole(request.role());
-        employe.setAgence(agenceService.findById(request.agenceId()));
-        return employe;
-    }
-
-    private static EmployeResponse toResponse(Employe employe) {
-        return new EmployeResponse(
-                employe.getIdEmploye(),
-                employe.getNom(),
-                employe.getPrenom(),
-                employe.getRole(),
-                employe.getAgence().getIdAgence()
-        );
     }
 }

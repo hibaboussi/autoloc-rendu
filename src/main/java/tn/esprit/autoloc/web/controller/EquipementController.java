@@ -19,11 +19,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import tn.esprit.autoloc.domain.Equipement;
 import tn.esprit.autoloc.service.IEquipementService;
 import tn.esprit.autoloc.web.dto.ApiError;
 import tn.esprit.autoloc.web.dto.EquipementRequest;
 import tn.esprit.autoloc.web.dto.EquipementResponse;
+import tn.esprit.autoloc.web.mapper.EquipementMapper;
 
 import java.util.List;
 
@@ -34,6 +34,7 @@ import java.util.List;
 public class EquipementController {
 
     private final IEquipementService equipementService;
+    private final EquipementMapper equipementMapper;
 
     @PostMapping
     @Operation(summary = "Créer un équipement")
@@ -44,7 +45,7 @@ public class EquipementController {
     })
     @ResponseStatus(HttpStatus.CREATED)
     public EquipementResponse create(@Valid @RequestBody EquipementRequest request) {
-        return toResponse(equipementService.create(toEntity(request)));
+        return equipementMapper.toResponse(equipementService.create(equipementMapper.toEntity(request)));
     }
 
     @GetMapping
@@ -52,7 +53,7 @@ public class EquipementController {
     @ApiResponse(responseCode = "200", description = "Liste des équipements")
     public List<EquipementResponse> findAll() {
         return equipementService.findAll().stream()
-                .map(EquipementController::toResponse)
+                .map(equipementMapper::toResponse)
                 .toList();
     }
 
@@ -64,7 +65,7 @@ public class EquipementController {
                     content = @Content(schema = @Schema(implementation = ApiError.class)))
     })
     public EquipementResponse findById(@Parameter(description = "Identifiant de l'équipement") @PathVariable Long id) {
-        return toResponse(equipementService.findById(id));
+        return equipementMapper.toResponse(equipementService.findById(id));
     }
 
     @PutMapping("/{id}")
@@ -78,7 +79,7 @@ public class EquipementController {
     })
     public EquipementResponse update(@Parameter(description = "Identifiant de l'équipement") @PathVariable Long id,
                                      @Valid @RequestBody EquipementRequest request) {
-        return toResponse(equipementService.update(id, toEntity(request)));
+        return equipementMapper.toResponse(equipementService.update(id, equipementMapper.toEntity(request)));
     }
 
     @DeleteMapping("/{id}")
@@ -91,15 +92,5 @@ public class EquipementController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteById(@Parameter(description = "Identifiant de l'équipement") @PathVariable Long id) {
         equipementService.deleteById(id);
-    }
-
-    private static Equipement toEntity(EquipementRequest request) {
-        Equipement equipement = new Equipement();
-        equipement.setLibelle(request.libelle());
-        return equipement;
-    }
-
-    private static EquipementResponse toResponse(Equipement equipement) {
-        return new EquipementResponse(equipement.getIdEquipement(), equipement.getLibelle());
     }
 }
