@@ -9,8 +9,7 @@ Les neuf repositories (`IAgenceRepository`, `IClientRepository`, `IContratReposi
 Chaque entité possède une interface de service et une implémentation dans `service` et `service.impl`. Les opérations de création remettent l'identifiant à `null` afin d'éviter qu'un identifiant fourni par le client ne remplace un enregistrement. Les mises à jour et suppressions vérifient d'abord l'existence de la ressource; une ressource absente lève `ResourceNotFoundException` et produit une réponse HTTP 404.
 
 ## CRUD exposé
-
-Les endpoints REST de `Client` et `Equipement` implémentent `POST`, `GET` de collection, `GET` par identifiant, `PUT` et `DELETE`. Ils utilisent des DTO validés afin de contrôler les données d'entrée et d'éviter les cycles JSON dus aux associations bidirectionnelles.
+Les neuf entités disposent d'un contrôleur REST avec `POST`, `GET` de collection, `GET` par identifiant, `PUT` et `DELETE`. Les contrôleurs injectent les services par constructeur. Ils utilisent des DTO validés; les associations sont référencées par identifiant dans les requêtes afin d'éviter les cycles JSON dus aux associations bidirectionnelles.
 
 ## Vérification
 

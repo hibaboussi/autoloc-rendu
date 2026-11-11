@@ -38,9 +38,12 @@ public class ContratServiceImpl implements IContratService {
 
     @Override
     public Contrat update(Long id, Contrat contrat) {
-        findById(id);
-        contrat.setIdContrat(id);
-        return contratRepository.save(contrat);
+        Contrat existingContrat = findById(id);
+        existingContrat.setDateSignature(contrat.getDateSignature());
+        existingContrat.setMontantTotal(contrat.getMontantTotal());
+        existingContrat.setValide(contrat.getValide());
+        existingContrat.setReservation(contrat.getReservation());
+        return contratRepository.save(existingContrat);
     }
 
     @Override
