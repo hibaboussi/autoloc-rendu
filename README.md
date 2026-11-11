@@ -14,6 +14,22 @@ Projet Spring Boot / Maven créé dans le cadre de l'atelier 1.
 ## Configuration
 Le fichier `src/main/resources/application.properties` contient la configuration JDBC MySQL et les options Hibernate. Le préfixe `/api` est défini par `server.servlet.context-path`. Un profil `demo` utilise une base H2 en mémoire pour lancer l'API et essayer Swagger/Postman sans configurer MySQL.
 
+## Lancer avec WAMP / MySQL
+
+1. Démarrer les services **Apache** et **MySQL** depuis Wampserver.
+2. Vérifier la connexion à phpMyAdmin sur `http://localhost:8080/phpmyadmin/`. La configuration du projet utilise `root` sans mot de passe; adapter `spring.datasource.username` et `spring.datasource.password` dans `src/main/resources/application.properties` si le compte MySQL local est différent.
+3. Démarrer l'application avec le profil MySQL normal. L'URL JDBC crée `autoloc_db` si elle n'existe pas et Hibernate (`ddl-auto=update`) crée/met à jour les dix tables depuis les entités; aucune suppression de tables existantes n'est nécessaire.
+
+Dans cette configuration WAMP, le port `8080` est utilisé par Apache. Lancer Spring Boot sur `18082` pour éviter le conflit :
+
+```powershell
+mvn spring-boot:run "-Dspring-boot.run.arguments=--server.port=18082"
+```
+
+Ouvrir ensuite Swagger sur `http://localhost:18082/api/swagger-ui.html`. La base contient initialement les tables mais aucune donnée métier; créer les premiers enregistrements via l'API, en commençant par une agence et un équipement avant un véhicule.
+
+La structure générée dans phpMyAdmin est visible dans [la capture de la base AutoLoc](docs/captures/wamp-autoloc-database.png).
+
 ## Entités créées
 - Vehicule
 - Agence
