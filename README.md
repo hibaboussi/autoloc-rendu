@@ -5,13 +5,14 @@ Projet Spring Boot / Maven créé dans le cadre de l'atelier 1.
 ## Stack
 - Java 17
 - Spring Boot 3.3.5
+- SpringDoc OpenAPI 2.6.0 / Swagger UI
 - Spring Data JPA
 - MySQL
 - Lombok
 - Maven
 
 ## Configuration
-Le fichier `src/main/resources/application.properties` contient la configuration JDBC MySQL et les options Hibernate.
+Le fichier `src/main/resources/application.properties` contient la configuration JDBC MySQL et les options Hibernate. Le préfixe `/api` est défini par `server.servlet.context-path`. Un profil `demo` utilise une base H2 en mémoire pour lancer l'API et essayer Swagger/Postman sans configurer MySQL.
 
 ## Entités créées
 - Vehicule
@@ -37,7 +38,7 @@ Le schéma comprend **9 tables d'entités** et **1 table de jointure** (`vehicul
 Le package `repository` contient une interface `I…Repository` qui étend `JpaRepository<Entité, Long>` pour chacune des neuf entités. Les packages `service` et `service.impl` contiennent respectivement les neuf interfaces métier et leurs implémentations. Chaque service propose les opérations de création, lecture de la liste, lecture par identifiant, mise à jour et suppression; une ressource absente déclenche une réponse HTTP 404 lorsqu'elle est appelée depuis l'API.
 
 ## API CRUD
-Le CRUD REST complet est exposé pour les neuf entités :
+Les contrôleurs REST documentés avec SpringDoc exposent :
 
 | Entité | Endpoint |
 |---|---|
@@ -51,7 +52,21 @@ Le CRUD REST complet est exposé pour les neuf entités :
 | Réservation | `/api/reservations` |
 | Véhicule | `/api/vehicules` |
 
-Pour chaque ressource : `POST` crée (201), `GET` liste ou lit par identifiant, `PUT /{id}` met à jour et `DELETE /{id}` supprime (204). Les corps JSON sont validés; les associations sont fournies par identifiant dans les requêtes et les réponses utilisent des DTO afin d'éviter les cycles JSON des associations JPA.
+Pour Agence, Client, Contrat, Employé, Équipement, Maintenance, Réservation et Véhicule : `POST` crée (201), `GET` liste ou lit par identifiant, `PUT /{id}` met à jour et `DELETE /{id}` supprime (204). Les paiements sont en lecture seule (`GET` collection et détail); ils sont créés et supprimés avec leur contrat par cascade. Les corps JSON sont validés; les associations sont fournies par identifiant dans les requêtes et les réponses utilisent des DTO afin d'éviter les cycles JSON des associations JPA.
+
+La documentation interactive est disponible sur `http://localhost:8080/api/swagger-ui.html`; le document OpenAPI est disponible sur `http://localhost:8080/api/v3/api-docs`.
+
+## Essai de l'atelier 5
+
+Sans MySQL, démarrer l'application avec le profil de démonstration :
+
+```powershell
+mvn spring-boot:run "-Dspring-boot.run.profiles=demo"
+```
+
+Importer `postman/AutoLoc.postman_collection.json` et `postman/AutoLoc-local.postman_environment.json` dans Postman, sélectionner **AutoLoc - local**, puis exécuter la collection dans l'ordre. L'application normale conserve sa configuration MySQL. La collection et les détails des tests sont décrits dans [docs/api-notes.md](docs/api-notes.md).
+
+Captures Swagger de vérification : [page Swagger](docs/captures/swagger-ui.png), [GET agences — 200](docs/captures/swagger-agences-get-200.png), [POST agence — 201](docs/captures/swagger-agences-post-201.png), [validation — 400](docs/captures/swagger-agences-post-400.png). Elles ont été prises sur le profil `demo` (port 18081, le port 8080 étant déjà occupé lors de la capture).
 
 ## Génération du schéma
 La configuration finale utilise `spring.jpa.hibernate.ddl-auto=update`. Pour recréer le schéma, vérifier d'abord que MySQL est démarré et que la base `autoloc_db` ne contient aucune donnée à conserver, puis lancer temporairement l'application avec `create` :

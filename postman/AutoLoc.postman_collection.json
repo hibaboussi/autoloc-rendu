@@ -1,0 +1,983 @@
+{
+  "info": {
+    "_postman_id": "8624d28e-7dc5-4efa-b6ee-a0699f4e3a15",
+    "name": "AutoLoc - Atelier 5",
+    "description": "Scénario de validation CRUD des neuf ressources AutoLoc, cas 400/404, paiement créé en cascade depuis un contrat, et nettoyage dans l'ordre des dépendances. Utiliser avec l'environnement AutoLoc - local et exécuter la collection dans l'ordre.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/api"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "if (!pm.environment.get('runId')) { pm.environment.set('runId', Date.now().toString()); }"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "const match = pm.info.requestName.match(/^\\[(\\d{3})\\]/);",
+          "if (match) {",
+          "  const expected = Number(match[1]);",
+          "  pm.test(`Réponse HTTP ${expected}`, () => pm.response.to.have.status(expected));",
+          "}"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "01 - Agences",
+      "item": [
+        {
+          "name": "[200] Lister les agences",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/agences"
+          }
+        },
+        {
+          "name": "[201] Créer une agence",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.environment.set('agenceId', pm.response.json().idAgence);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nom\":\"Agence Atelier 5\",\"ville\":\"Tunis\",\"adresse\":\"10 avenue Habib Bourguiba\",\"telephone\":\"71000001\"}"
+            },
+            "url": "{{baseUrl}}/agences"
+          }
+        },
+        {
+          "name": "[200] Consulter l'agence créée",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/agences/{{agenceId}}"
+          }
+        },
+        {
+          "name": "[404] Consulter une agence inexistante",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/agences/999999"
+          }
+        },
+        {
+          "name": "[400] Créer une agence invalide",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nom\":\"\",\"ville\":\"Tunis\",\"adresse\":\"10 avenue Habib Bourguiba\",\"telephone\":\"71000001\"}"
+            },
+            "url": "{{baseUrl}}/agences"
+          }
+        },
+        {
+          "name": "[200] Modifier l'agence",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nom\":\"Agence Atelier 5 modifiée\",\"ville\":\"Tunis\",\"adresse\":\"10 avenue Habib Bourguiba\",\"telephone\":\"71000002\"}"
+            },
+            "url": "{{baseUrl}}/agences/{{agenceId}}"
+          }
+        },
+        {
+          "name": "[404] Modifier une agence inexistante",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nom\":\"Agence\",\"ville\":\"Tunis\",\"adresse\":\"Adresse\",\"telephone\":\"71000003\"}"
+            },
+            "url": "{{baseUrl}}/agences/999999"
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - Clients",
+      "item": [
+        {
+          "name": "[200] Lister les clients",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/clients"
+          }
+        },
+        {
+          "name": "[201] Créer un client",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.environment.set('runId', Date.now().toString());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.environment.set('clientId', pm.response.json().idClient);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nom\":\"Boussii\",\"prenom\":\"Hiba\",\"email\":\"hiba-{{runId}}@example.com\",\"telephone\":\"22000001\",\"numPermis\":\"P-{{runId}}\",\"dateInscription\":\"2026-11-11\"}"
+            },
+            "url": "{{baseUrl}}/clients"
+          }
+        },
+        {
+          "name": "[200] Consulter le client créé",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/clients/{{clientId}}"
+          }
+        },
+        {
+          "name": "[404] Consulter un client inexistant",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/clients/999999"
+          }
+        },
+        {
+          "name": "[400] Créer un client invalide",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nom\":\"\",\"prenom\":\"\",\"email\":\"invalide\",\"telephone\":\"\",\"numPermis\":\"\",\"dateInscription\":\"2026-11-11\"}"
+            },
+            "url": "{{baseUrl}}/clients"
+          }
+        },
+        {
+          "name": "[200] Modifier le client",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nom\":\"Boussii\",\"prenom\":\"Hiba modifié\",\"email\":\"hiba-{{runId}}@example.com\",\"telephone\":\"22000002\",\"numPermis\":\"P-{{runId}}\",\"dateInscription\":\"2026-11-11\"}"
+            },
+            "url": "{{baseUrl}}/clients/{{clientId}}"
+          }
+        },
+        {
+          "name": "[404] Modifier un client inexistant",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nom\":\"Boussii\",\"prenom\":\"Hiba\",\"email\":\"hiba-{{runId}}@example.com\",\"telephone\":\"22000003\",\"numPermis\":\"P-{{runId}}\",\"dateInscription\":\"2026-11-11\"}"
+            },
+            "url": "{{baseUrl}}/clients/999999"
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 - Equipements",
+      "item": [
+        {
+          "name": "[200] Lister les équipements",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/equipements"
+          }
+        },
+        {
+          "name": "[201] Créer un équipement",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.environment.set('equipementId', pm.response.json().idEquipement);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"libelle\":\"Climatisation Atelier 5\"}"
+            },
+            "url": "{{baseUrl}}/equipements"
+          }
+        },
+        {
+          "name": "[200] Consulter l'équipement créé",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/equipements/{{equipementId}}"
+          }
+        },
+        {
+          "name": "[404] Consulter un équipement inexistant",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/equipements/999999"
+          }
+        },
+        {
+          "name": "[400] Créer un équipement invalide",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"libelle\":\"\"}"
+            },
+            "url": "{{baseUrl}}/equipements"
+          }
+        },
+        {
+          "name": "[200] Modifier l'équipement",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"libelle\":\"Climatisation mise à jour\"}"
+            },
+            "url": "{{baseUrl}}/equipements/{{equipementId}}"
+          }
+        },
+        {
+          "name": "[404] Modifier un équipement inexistant",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"libelle\":\"Equipement\"}"
+            },
+            "url": "{{baseUrl}}/equipements/999999"
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 - Véhicules",
+      "item": [
+        {
+          "name": "[200] Lister les véhicules",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/vehicules"
+          }
+        },
+        {
+          "name": "[201] Créer un véhicule",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.environment.set('runId', Date.now().toString());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.environment.set('vehiculeId', pm.response.json().idVehicule);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"immatriculation\":\"AUT-{{runId}}\",\"marque\":\"Toyota\",\"modele\":\"Yaris\",\"categorie\":\"CITADINE\",\"tarifJournalier\":120,\"statut\":\"DISPONIBLE\",\"agenceId\":{{agenceId}},\"equipementIds\":[{{equipementId}}]}"
+            },
+            "url": "{{baseUrl}}/vehicules"
+          }
+        },
+        {
+          "name": "[200] Consulter le véhicule créé",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/vehicules/{{vehiculeId}}"
+          }
+        },
+        {
+          "name": "[404] Consulter un véhicule inexistant",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/vehicules/999999"
+          }
+        },
+        {
+          "name": "[400] Créer un véhicule avec un tarif négatif",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"immatriculation\":\"INVALIDE-{{runId}}\",\"marque\":\"Toyota\",\"modele\":\"Yaris\",\"categorie\":\"CITADINE\",\"tarifJournalier\":-1,\"statut\":\"DISPONIBLE\",\"agenceId\":{{agenceId}},\"equipementIds\":[]}"
+            },
+            "url": "{{baseUrl}}/vehicules"
+          }
+        },
+        {
+          "name": "[200] Modifier le véhicule",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"immatriculation\":\"AUT-{{runId}}\",\"marque\":\"Toyota\",\"modele\":\"Yaris modifiée\",\"categorie\":\"CITADINE\",\"tarifJournalier\":125,\"statut\":\"DISPONIBLE\",\"agenceId\":{{agenceId}},\"equipementIds\":[{{equipementId}}]}"
+            },
+            "url": "{{baseUrl}}/vehicules/{{vehiculeId}}"
+          }
+        },
+        {
+          "name": "[404] Modifier un véhicule inexistant",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"immatriculation\":\"ABSENT-{{runId}}\",\"marque\":\"Toyota\",\"modele\":\"Yaris\",\"categorie\":\"CITADINE\",\"tarifJournalier\":120,\"statut\":\"DISPONIBLE\",\"agenceId\":{{agenceId}},\"equipementIds\":[]}"
+            },
+            "url": "{{baseUrl}}/vehicules/999999"
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 - Employés",
+      "item": [
+        {
+          "name": "[200] Lister les employés",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/employes"
+          }
+        },
+        {
+          "name": "[201] Créer un employé",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.environment.set('employeId', pm.response.json().idEmploye);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nom\":\"Employé\",\"prenom\":\"Atelier 5\",\"role\":\"AGENT\",\"agenceId\":{{agenceId}}}"
+            },
+            "url": "{{baseUrl}}/employes"
+          }
+        },
+        {
+          "name": "[200] Consulter l'employé créé",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/employes/{{employeId}}"
+          }
+        },
+        {
+          "name": "[404] Consulter un employé inexistant",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/employes/999999"
+          }
+        },
+        {
+          "name": "[400] Créer un employé invalide",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nom\":\"\",\"prenom\":\"\",\"role\":\"AGENT\",\"agenceId\":{{agenceId}}}"
+            },
+            "url": "{{baseUrl}}/employes"
+          }
+        },
+        {
+          "name": "[200] Modifier l'employé",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nom\":\"Employé modifié\",\"prenom\":\"Atelier 5\",\"role\":\"MANAGER\",\"agenceId\":{{agenceId}}}"
+            },
+            "url": "{{baseUrl}}/employes/{{employeId}}"
+          }
+        },
+        {
+          "name": "[404] Modifier un employé inexistant",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nom\":\"Employé\",\"prenom\":\"Test\",\"role\":\"AGENT\",\"agenceId\":{{agenceId}}}"
+            },
+            "url": "{{baseUrl}}/employes/999999"
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 - Maintenances",
+      "item": [
+        {
+          "name": "[200] Lister les maintenances",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/maintenances"
+          }
+        },
+        {
+          "name": "[201] Créer une maintenance",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.environment.set('maintenanceId', pm.response.json().idMaintenance);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"dateDebut\":\"2026-11-11\",\"dateFin\":\"2026-11-12\",\"description\":\"Révision périodique\",\"vehiculeId\":{{vehiculeId}}}"
+            },
+            "url": "{{baseUrl}}/maintenances"
+          }
+        },
+        {
+          "name": "[200] Consulter la maintenance créée",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/maintenances/{{maintenanceId}}"
+          }
+        },
+        {
+          "name": "[404] Consulter une maintenance inexistante",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/maintenances/999999"
+          }
+        },
+        {
+          "name": "[400] Refuser une date de fin antérieure",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"dateDebut\":\"2026-11-12\",\"dateFin\":\"2026-11-11\",\"description\":\"Dates invalides\",\"vehiculeId\":{{vehiculeId}}}"
+            },
+            "url": "{{baseUrl}}/maintenances"
+          }
+        },
+        {
+          "name": "[200] Modifier la maintenance",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"dateDebut\":\"2026-11-11\",\"dateFin\":\"2026-11-13\",\"description\":\"Révision terminée\",\"vehiculeId\":{{vehiculeId}}}"
+            },
+            "url": "{{baseUrl}}/maintenances/{{maintenanceId}}"
+          }
+        },
+        {
+          "name": "[404] Modifier une maintenance inexistante",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"dateDebut\":\"2026-11-11\",\"dateFin\":\"2026-11-12\",\"description\":\"Test\",\"vehiculeId\":{{vehiculeId}}}"
+            },
+            "url": "{{baseUrl}}/maintenances/999999"
+          }
+        }
+      ]
+    },
+    {
+      "name": "07 - Réservations",
+      "item": [
+        {
+          "name": "[200] Lister les réservations",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/reservations"
+          }
+        },
+        {
+          "name": "[201] Créer une réservation",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.environment.set('reservationId', pm.response.json().idReservation);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"dateDebut\":\"2026-12-01\",\"dateFin\":\"2026-12-03\",\"statut\":\"CONFIRMEE\",\"vehiculeId\":{{vehiculeId}},\"clientId\":{{clientId}}}"
+            },
+            "url": "{{baseUrl}}/reservations"
+          }
+        },
+        {
+          "name": "[200] Consulter la réservation créée",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/reservations/{{reservationId}}"
+          }
+        },
+        {
+          "name": "[404] Consulter une réservation inexistante",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/reservations/999999"
+          }
+        },
+        {
+          "name": "[400] Refuser des dates incohérentes",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"dateDebut\":\"2026-12-03\",\"dateFin\":\"2026-12-01\",\"statut\":\"CONFIRMEE\",\"vehiculeId\":{{vehiculeId}},\"clientId\":{{clientId}}}"
+            },
+            "url": "{{baseUrl}}/reservations"
+          }
+        },
+        {
+          "name": "[200] Modifier la réservation",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"dateDebut\":\"2026-12-01\",\"dateFin\":\"2026-12-04\",\"statut\":\"CONFIRMEE\",\"vehiculeId\":{{vehiculeId}},\"clientId\":{{clientId}}}"
+            },
+            "url": "{{baseUrl}}/reservations/{{reservationId}}"
+          }
+        },
+        {
+          "name": "[404] Modifier une réservation inexistante",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"dateDebut\":\"2026-12-01\",\"dateFin\":\"2026-12-03\",\"statut\":\"CONFIRMEE\",\"vehiculeId\":{{vehiculeId}},\"clientId\":{{clientId}}}"
+            },
+            "url": "{{baseUrl}}/reservations/999999"
+          }
+        }
+      ]
+    },
+    {
+      "name": "08 - Contrats et paiements (cascade)",
+      "item": [
+        {
+          "name": "[200] Lister les contrats",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/contrats"
+          }
+        },
+        {
+          "name": "[201] Créer un contrat avec son paiement (cascade)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const contrat = pm.response.json();",
+                  "pm.environment.set('contratId', contrat.idContrat);",
+                  "pm.environment.set('paiementId', contrat.paiementId);",
+                  "pm.test('Le paiement est créé avec le contrat', () => pm.expect(contrat.paiementId).to.be.a('number'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"dateSignature\":\"2026-11-11\",\"montantTotal\":480,\"valide\":true,\"reservationId\":{{reservationId}},\"paiement\":{\"montant\":150,\"datePaiement\":\"2026-11-11\",\"modePaiement\":\"CARTE\"}}"
+            },
+            "url": "{{baseUrl}}/contrats"
+          }
+        },
+        {
+          "name": "[200] Lister les paiements (vérifier la cascade)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/paiements"
+          }
+        },
+        {
+          "name": "[200] Consulter le paiement créé par cascade",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/paiements/{{paiementId}}"
+          }
+        },
+        {
+          "name": "[405] Refuser la création directe d'un paiement",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"montant\":10}"
+            },
+            "url": "{{baseUrl}}/paiements"
+          }
+        },
+        {
+          "name": "[404] Consulter un paiement inexistant",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/paiements/999999"
+          }
+        },
+        {
+          "name": "[200] Modifier le contrat sans supprimer son paiement",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"dateSignature\":\"2026-11-11\",\"montantTotal\":520,\"valide\":true,\"reservationId\":{{reservationId}}}"
+            },
+            "url": "{{baseUrl}}/contrats/{{contratId}}"
+          }
+        },
+        {
+          "name": "[404] Consulter un contrat inexistant",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/contrats/999999"
+          }
+        },
+        {
+          "name": "[400] Refuser un contrat invalide",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"dateSignature\":\"2026-11-11\",\"montantTotal\":-1,\"valide\":true,\"reservationId\":{{reservationId}}}"
+            },
+            "url": "{{baseUrl}}/contrats"
+          }
+        },
+        {
+          "name": "[204] Supprimer le contrat (cascade de suppression du paiement)",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/contrats/{{contratId}}"
+          }
+        },
+        {
+          "name": "[404] Vérifier la suppression en cascade du paiement",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/paiements/{{paiementId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "09 - Nettoyage (exécuter à la fin)",
+      "item": [
+        {
+          "name": "[204] Supprimer la réservation",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/reservations/{{reservationId}}"
+          }
+        },
+        {
+          "name": "[204] Supprimer la maintenance",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/maintenances/{{maintenanceId}}"
+          }
+        },
+        {
+          "name": "[204] Supprimer l'employé",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/employes/{{employeId}}"
+          }
+        },
+        {
+          "name": "[204] Supprimer le véhicule",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/vehicules/{{vehiculeId}}"
+          }
+        },
+        {
+          "name": "[204] Supprimer l'équipement",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/equipements/{{equipementId}}"
+          }
+        },
+        {
+          "name": "[204] Supprimer le client",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/clients/{{clientId}}"
+          }
+        },
+        {
+          "name": "[204] Supprimer l'agence",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/agences/{{agenceId}}"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,5 +1,12 @@
 package tn.esprit.autoloc.web.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -16,14 +23,16 @@ import tn.esprit.autoloc.domain.Vehicule;
 import tn.esprit.autoloc.service.IAgenceService;
 import tn.esprit.autoloc.service.IEquipementService;
 import tn.esprit.autoloc.service.IVehiculeService;
+import tn.esprit.autoloc.web.dto.ApiError;
 import tn.esprit.autoloc.web.dto.VehiculeRequest;
 import tn.esprit.autoloc.web.dto.VehiculeResponse;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/vehicules")
+@RequestMapping("/vehicules")
 @RequiredArgsConstructor
+@Tag(name = "Véhicules", description = "Gestion des véhicules de location")
 public class VehiculeController {
 
     private final IVehiculeService vehiculeService;
@@ -31,29 +40,60 @@ public class VehiculeController {
     private final IEquipementService equipementService;
 
     @PostMapping
+    @Operation(summary = "Créer un véhicule")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Véhicule créé"),
+            @ApiResponse(responseCode = "400", description = "Données invalides",
+                    content = @Content(schema = @Schema(implementation = ApiError.class))),
+            @ApiResponse(responseCode = "404", description = "Agence ou équipement introuvable",
+                    content = @Content(schema = @Schema(implementation = ApiError.class)))
+    })
     @ResponseStatus(HttpStatus.CREATED)
     public VehiculeResponse create(@Valid @RequestBody VehiculeRequest request) {
         return toResponse(vehiculeService.create(toEntity(request)));
     }
 
     @GetMapping
+    @Operation(summary = "Lister les véhicules")
+    @ApiResponse(responseCode = "200", description = "Liste des véhicules")
     public List<VehiculeResponse> findAll() {
         return vehiculeService.findAll().stream().map(VehiculeController::toResponse).toList();
     }
 
     @GetMapping("/{id}")
-    public VehiculeResponse findById(@PathVariable Long id) {
+    @Operation(summary = "Consulter un véhicule")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Véhicule trouvé"),
+            @ApiResponse(responseCode = "404", description = "Véhicule introuvable",
+                    content = @Content(schema = @Schema(implementation = ApiError.class)))
+    })
+    public VehiculeResponse findById(@Parameter(description = "Identifiant du véhicule") @PathVariable Long id) {
         return toResponse(vehiculeService.findById(id));
     }
 
     @PutMapping("/{id}")
-    public VehiculeResponse update(@PathVariable Long id, @Valid @RequestBody VehiculeRequest request) {
+    @Operation(summary = "Modifier un véhicule")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Véhicule modifié"),
+            @ApiResponse(responseCode = "400", description = "Données invalides",
+                    content = @Content(schema = @Schema(implementation = ApiError.class))),
+            @ApiResponse(responseCode = "404", description = "Véhicule introuvable",
+                    content = @Content(schema = @Schema(implementation = ApiError.class)))
+    })
+    public VehiculeResponse update(@Parameter(description = "Identifiant du véhicule") @PathVariable Long id,
+                                   @Valid @RequestBody VehiculeRequest request) {
         return toResponse(vehiculeService.update(id, toEntity(request)));
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Supprimer un véhicule")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Véhicule supprimé"),
+            @ApiResponse(responseCode = "404", description = "Véhicule introuvable",
+                    content = @Content(schema = @Schema(implementation = ApiError.class)))
+    })
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteById(@PathVariable Long id) {
+    public void deleteById(@Parameter(description = "Identifiant du véhicule") @PathVariable Long id) {
         vehiculeService.deleteById(id);
     }
 

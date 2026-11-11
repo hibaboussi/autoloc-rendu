@@ -42,7 +42,6 @@ public class ContratServiceImpl implements IContratService {
         existingContrat.setDateSignature(contrat.getDateSignature());
         existingContrat.setMontantTotal(contrat.getMontantTotal());
         existingContrat.setValide(contrat.getValide());
-        existingContrat.setReservation(contrat.getReservation());
         return contratRepository.save(existingContrat);
     }
 

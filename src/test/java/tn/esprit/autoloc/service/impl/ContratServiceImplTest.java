@@ -32,9 +32,11 @@ class ContratServiceImplTest {
     @Test
     void updateCopiesEditableFieldsAndPreservesExistingPayment() {
         Paiement paiement = new Paiement();
+        Reservation existingReservation = new Reservation();
         Contrat existingContrat = new Contrat();
         existingContrat.setIdContrat(7L);
         existingContrat.setPaiement(paiement);
+        existingContrat.setReservation(existingReservation);
         when(contratRepository.findById(7L)).thenReturn(Optional.of(existingContrat));
         when(contratRepository.save(existingContrat)).thenReturn(existingContrat);
 
@@ -49,7 +51,7 @@ class ContratServiceImplTest {
 
         assertSame(existingContrat, updated);
         assertSame(paiement, updated.getPaiement());
-        assertSame(reservation, updated.getReservation());
+        assertSame(existingReservation, updated.getReservation());
         assertEquals(LocalDate.of(2026, 11, 11), updated.getDateSignature());
         assertEquals(new BigDecimal("125.00"), updated.getMontantTotal());
         assertTrue(updated.getValide());
