@@ -6,6 +6,7 @@ import tn.esprit.autoloc.domain.Reservation;
 import tn.esprit.autoloc.domain.Vehicule;
 import tn.esprit.autoloc.web.dto.ReservationRequest;
 import tn.esprit.autoloc.web.dto.ReservationResponse;
+import tn.esprit.autoloc.web.dto.ReservationResponseDTO;
 
 @Component
 public class ReservationMapper {
@@ -22,6 +23,18 @@ public class ReservationMapper {
 
     public ReservationResponse toResponse(Reservation reservation) {
         return new ReservationResponse(
+                reservation.getIdReservation(),
+                reservation.getDateDebut(),
+                reservation.getDateFin(),
+                reservation.getStatut(),
+                reservation.getVehicule().getIdVehicule(),
+                reservation.getClient().getIdClient(),
+                reservation.getContrat() == null ? null : reservation.getContrat().getIdContrat()
+        );
+    }
+
+    public ReservationResponseDTO toResponseDTO(Reservation reservation) {
+        return new ReservationResponseDTO(
                 reservation.getIdReservation(),
                 reservation.getDateDebut(),
                 reservation.getDateFin(),

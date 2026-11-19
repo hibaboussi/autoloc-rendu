@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import tn.esprit.autoloc.service.IContratService;
@@ -24,8 +25,10 @@ import tn.esprit.autoloc.service.IReservationService;
 import tn.esprit.autoloc.web.dto.ApiError;
 import tn.esprit.autoloc.web.dto.ContratRequest;
 import tn.esprit.autoloc.web.dto.ContratResponse;
+import tn.esprit.autoloc.web.dto.ContratDTO;
 import tn.esprit.autoloc.web.mapper.ContratMapper;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -96,5 +99,21 @@ public class ContratController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteById(@Parameter(description = "Identifiant du contrat") @PathVariable Long id) {
         contratService.deleteById(id);
+    }
+
+    @PostMapping("/affecter-reservation")
+    @Operation(summary = "Créer un contrat et l'affecter à une réservation")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Contrat affecté à la réservation"),
+            @ApiResponse(responseCode = "400", description = "La période ne désigne pas une seule réservation",
+                    content = @Content(schema = @Schema(implementation = ApiError.class))),
+            @ApiResponse(responseCode = "404", description = "Réservation introuvable",
+                    content = @Content(schema = @Schema(implementation = ApiError.class)))
+    })
+    public ContratDTO affecterContratAReservation(
+            @Parameter(description = "Date de signature, format yyyy-MM-dd") @RequestParam LocalDate dateSignature,
+            @Parameter(description = "Date de début de la réservation, format yyyy-MM-dd") @RequestParam LocalDate dateDebut,
+            @Parameter(description = "Date de fin de la réservation, format yyyy-MM-dd") @RequestParam LocalDate dateFin) {
+        return contratService.affecterContratAReservation(dateSignature, dateDebut, dateFin);
     }
 }

@@ -92,6 +92,35 @@ La dépendance `spring-boot-starter-validation` active les contraintes Jakarta p
 
 La note de l'atelier et les captures d'exécution sont disponibles dans [docs/atelier-6-notes.md](docs/atelier-6-notes.md) et [docs/captures](docs/captures).
 
+## Atelier 7 — Services d'affectation
+
+Les cinq opérations métier sont implémentées dans les services et renvoient des DTO (`ReservationResponseDTO`, `VehiculeDTO` ou `ContratDTO`). Les contrôleurs exposent ces opérations sans porter leur logique métier.
+
+| Opération | Endpoint |
+|---|---|
+| Affecter un client à une réservation | `POST /api/reservations/{id}/affecter-client?nom=...&prenom=...` |
+| Affecter un équipement à un véhicule | `PUT /api/vehicules/{id}/equipements/{equipementId}` |
+| Affecter une maintenance existante à un véhicule | `POST /api/vehicules/affecter-maintenance?description=...&immatriculation=...` |
+| Créer et affecter un contrat à la réservation de la période | `POST /api/contrats/affecter-reservation?dateSignature=YYYY-MM-DD&dateDebut=YYYY-MM-DD&dateFin=YYYY-MM-DD` |
+| Créer une réservation avec son contrat | `POST /api/reservations/avec-contrat` |
+
+Le dernier endpoint reçoit un objet JSON de la forme :
+
+```json
+{
+  "reservation": {
+    "dateDebut": "2026-12-01",
+    "dateFin": "2026-12-03",
+    "statut": "CONFIRMEE",
+    "vehiculeId": 1,
+    "clientId": 1
+  },
+  "dateSignature": "2026-11-19"
+}
+```
+
+Le contrat est créé comme valide et son montant est calculé à partir du tarif journalier et de la durée (au minimum une journée). Les associations par nom/prénom, description de maintenance ou période doivent correspondre à un seul enregistrement; une absence renvoie 404 et une correspondance ambiguë renvoie 400.
+
 ## Génération du schéma
 La configuration finale utilise `spring.jpa.hibernate.ddl-auto=update`. Pour recréer le schéma, vérifier d'abord que MySQL est démarré et que la base `autoloc_db` ne contient aucune donnée à conserver, puis lancer temporairement l'application avec `create` :
 

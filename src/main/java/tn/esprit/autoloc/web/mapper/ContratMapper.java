@@ -6,6 +6,7 @@ import tn.esprit.autoloc.domain.Paiement;
 import tn.esprit.autoloc.domain.Reservation;
 import tn.esprit.autoloc.web.dto.ContratRequest;
 import tn.esprit.autoloc.web.dto.ContratResponse;
+import tn.esprit.autoloc.web.dto.ContratDTO;
 
 @Component
 public class ContratMapper {
@@ -29,6 +30,17 @@ public class ContratMapper {
 
     public ContratResponse toResponse(Contrat contrat) {
         return new ContratResponse(
+                contrat.getIdContrat(),
+                contrat.getDateSignature(),
+                contrat.getMontantTotal(),
+                contrat.getValide(),
+                contrat.getReservation().getIdReservation(),
+                contrat.getPaiement() == null ? null : contrat.getPaiement().getIdPaiement()
+        );
+    }
+
+    public ContratDTO toDTO(Contrat contrat) {
+        return new ContratDTO(
                 contrat.getIdContrat(),
                 contrat.getDateSignature(),
                 contrat.getMontantTotal(),

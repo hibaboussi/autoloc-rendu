@@ -6,6 +6,7 @@ import tn.esprit.autoloc.domain.Equipement;
 import tn.esprit.autoloc.domain.Vehicule;
 import tn.esprit.autoloc.web.dto.VehiculeRequest;
 import tn.esprit.autoloc.web.dto.VehiculeResponse;
+import tn.esprit.autoloc.web.dto.VehiculeDTO;
 
 import java.util.List;
 
@@ -27,6 +28,19 @@ public class VehiculeMapper {
 
     public VehiculeResponse toResponse(Vehicule vehicule) {
         return new VehiculeResponse(
+                vehicule.getIdVehicule(),
+                vehicule.getImmatriculation(),
+                vehicule.getMarque(),
+                vehicule.getModele(),
+                vehicule.getCategorie(),
+                vehicule.getTarifJournalier(),
+                vehicule.getStatut(),
+                vehicule.getAgence().getIdAgence()
+        );
+    }
+
+    public VehiculeDTO toDTO(Vehicule vehicule) {
+        return new VehiculeDTO(
                 vehicule.getIdVehicule(),
                 vehicule.getImmatriculation(),
                 vehicule.getMarque(),

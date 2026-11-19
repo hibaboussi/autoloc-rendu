@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import tn.esprit.autoloc.service.IClientService;
@@ -25,6 +26,8 @@ import tn.esprit.autoloc.service.IVehiculeService;
 import tn.esprit.autoloc.web.dto.ApiError;
 import tn.esprit.autoloc.web.dto.ReservationRequest;
 import tn.esprit.autoloc.web.dto.ReservationResponse;
+import tn.esprit.autoloc.web.dto.ReservationResponseDTO;
+import tn.esprit.autoloc.web.dto.ReservationWithContratRequestDTO;
 import tn.esprit.autoloc.web.mapper.ReservationMapper;
 
 import java.util.List;
@@ -102,5 +105,36 @@ public class ReservationController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteById(@Parameter(description = "Identifiant de la réservation") @PathVariable Long id) {
         reservationService.deleteById(id);
+    }
+
+    @PostMapping("/{id}/affecter-client")
+    @Operation(summary = "Affecter un client à une réservation")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Client affecté à la réservation"),
+            @ApiResponse(responseCode = "400", description = "Plusieurs clients correspondent au nom fourni",
+                    content = @Content(schema = @Schema(implementation = ApiError.class))),
+            @ApiResponse(responseCode = "404", description = "Réservation ou client introuvable",
+                    content = @Content(schema = @Schema(implementation = ApiError.class)))
+    })
+    public ReservationResponseDTO affecterReservationAClient(
+            @Parameter(description = "Identifiant de la réservation") @PathVariable Long id,
+            @RequestParam String nom,
+            @RequestParam String prenom) {
+        return reservationService.affecterReservationAClient(id, nom, prenom);
+    }
+
+    @PostMapping("/avec-contrat")
+    @Operation(summary = "Créer une réservation et son contrat associé")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Réservation et contrat créés"),
+            @ApiResponse(responseCode = "400", description = "Données invalides",
+                    content = @Content(schema = @Schema(implementation = ApiError.class))),
+            @ApiResponse(responseCode = "404", description = "Client ou véhicule introuvable",
+                    content = @Content(schema = @Schema(implementation = ApiError.class)))
+    })
+    @ResponseStatus(HttpStatus.CREATED)
+    public ReservationResponseDTO creerReservationEtContratAssocie(
+            @Valid @RequestBody ReservationWithContratRequestDTO requestDTO) {
+        return reservationService.creerReservationEtContratAssocie(requestDTO);
     }
 }
